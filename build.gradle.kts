@@ -2,6 +2,7 @@ plugins {
   id("uk.gov.justice.hmpps.gradle-spring-boot") version "11.0.2"
   kotlin("jvm") version "2.4.0"
   kotlin("plugin.spring") version "2.4.0"
+  kotlin("plugin.serialization") version "2.4.0"
   id("jacoco")
   id("org.barfuin.gradle.jacocolog") version "3.1.0"
 }
@@ -21,6 +22,7 @@ dependencies {
   implementation("software.amazon.awssdk:athena:2.31.65")
   implementation("software.amazon.awssdk:sts:2.31.65")
   implementation("uk.gov.justice.service.hmpps:hmpps-kotlin-spring-boot-starter:3.0.0")
+  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 
   // Security
   implementation("org.springframework.boot:spring-boot-starter-security")
