@@ -33,11 +33,10 @@ class DefinitionController(
     description = "Saves a definition",
     security = [SecurityRequirement(name = "bearer-jwt")],
   )
-  @PutMapping("/definitions/{definitionId}")
+  @PutMapping("/definitions")
   suspend fun putDefinition(
     @RequestBody
     body: String,
-    @PathVariable definitionId: String,
     httpRequest: HttpServletRequest,
   ) {
     // Do proper validation, which will throw if wrong. Handled in the exception handler
