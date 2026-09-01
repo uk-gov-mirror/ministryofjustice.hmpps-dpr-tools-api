@@ -55,6 +55,34 @@ class DefinitionController(
     )
   }
 
+  @Deprecated("Old endpoint, kept for one cycle in case of need for easy reversion")
+  @Operation(
+    description = "Saves a definition",
+    security = [SecurityRequirement(name = "bearer-jwt")],
+  )
+  @PutMapping("/definitions/{definitionId}")
+  suspend fun putDefinition(
+    @RequestBody
+    body: String,
+    @PathVariable definitionId: String,
+    httpRequest: HttpServletRequest,
+  ) {
+    // Do proper validation, which will throw if wrong. Handled in the exception handler
+    val definition = dprDefinitionGson.fromJson(body, ProductDefinition::class.java)
+    return definitionService.saveAndValidate(
+      definition,
+      httpRequest.getUserContext(
+        manageUsersClient,
+        hasProbationDatasources,
+        DataProductReportableInformation(
+          id = "",
+          variantId = "",
+        ),
+      ),
+      body,
+    )
+  }
+
   @Operation(
     description = "Deletes a definition",
     security = [ SecurityRequirement(name = "bearer-jwt") ],
