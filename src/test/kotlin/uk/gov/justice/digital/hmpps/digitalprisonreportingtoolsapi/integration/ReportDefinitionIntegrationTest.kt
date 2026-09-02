@@ -368,11 +368,7 @@ class ReportDefinitionIntegrationTest : IntegrationTestBase() {
                 "id": "people",
                 "name": "All",
                 "datasource": "redshift",
-                "query": [{
-                  "index": 0,
-                  "datasource": "redshift",
-                  "query": "SELECT 1"
-                }],
+                "query": "SELECT 1",
                 "schema": {
                   "field": [
                     {
