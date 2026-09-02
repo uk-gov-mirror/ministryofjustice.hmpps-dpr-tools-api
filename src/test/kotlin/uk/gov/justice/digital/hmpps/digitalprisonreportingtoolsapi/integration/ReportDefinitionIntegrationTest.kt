@@ -35,15 +35,13 @@ class ReportDefinitionIntegrationTest : IntegrationTestBase() {
       "dataset": [
         {
           "id": "20",
-          "datasource": "activities",
           "name": "21",
-          "query": [{"index": 10, "datasource": "activities", "query": "SELECT '70' AS F30"}],
+          "query": "SELECT '70' AS F30",
           "schema": {
             "field": [
               {
                 "name": "F30",
-                "type": "string",
-                "display": "disp1"
+                "type": "string"
               }
             ]
           }
