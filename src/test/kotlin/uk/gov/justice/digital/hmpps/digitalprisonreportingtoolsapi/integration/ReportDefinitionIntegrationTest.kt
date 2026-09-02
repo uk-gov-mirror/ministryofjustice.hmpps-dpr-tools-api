@@ -37,6 +37,7 @@ class ReportDefinitionIntegrationTest : IntegrationTestBase() {
           "id": "20",
           "name": "21",
           "query": "SELECT '70' AS F30",
+          "datasource": "10",
           "schema": {
             "field": [
               {
@@ -57,7 +58,6 @@ class ReportDefinitionIntegrationTest : IntegrationTestBase() {
           "render": "HTML",
           "specification": {
             "template": "list",
-            "section": [],
             "field": [
               {
                 "name": "${'$'}ref:F30",
