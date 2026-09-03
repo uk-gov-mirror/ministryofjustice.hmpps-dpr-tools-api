@@ -24,8 +24,7 @@ class ReportDefinitionIntegrationTest : IntegrationTestBase() {
         "version": "5",
         "owner": "6",
         "purpose": "7",
-        "profile": "8",
-        "dqri": "9"
+        "profile": "8"
       },
       "datasource": [
         {
@@ -38,22 +37,22 @@ class ReportDefinitionIntegrationTest : IntegrationTestBase() {
           "id": "20",
           "name": "21",
           "query": "SELECT '70' AS F30",
+          "datasource": "10",
           "schema": {
-          "field": [
-            {
-              "name": "F30",
-              "type": "string"
-            }
-          ]
+            "field": [
+              {
+                "name": "F30",
+                "type": "string"
+              }
+            ]
+          }
         }
-      }
       ],
       "report": [
         {
           "id": "40",
           "name": "41",
           "description": "42",
-          "created": "2023-12-07T09:21:00",
           "version": "43",
           "dataset": "20",
           "render": "HTML",
@@ -104,7 +103,7 @@ class ReportDefinitionIntegrationTest : IntegrationTestBase() {
   @Test
   fun `Valid definition is saved and is presented by list endpoint`() {
     webTestClient.put()
-      .uri("/definitions/1")
+      .uri("/definitions")
       .headers(setAuthorisation(roles = listOf(authorisedRole)))
       .contentType(MediaType.APPLICATION_JSON)
       .bodyValue(productDefinition)
@@ -138,7 +137,7 @@ class ReportDefinitionIntegrationTest : IntegrationTestBase() {
   @Test
   fun `Valid definition is saved and is presented by definition endpoint`() {
     webTestClient.put()
-      .uri("/definitions/1")
+      .uri("/definitions")
       .headers(setAuthorisation(roles = listOf(authorisedRole)))
       .contentType(MediaType.APPLICATION_JSON)
       .bodyValue(productDefinition)
@@ -189,7 +188,7 @@ class ReportDefinitionIntegrationTest : IntegrationTestBase() {
   @Test
   fun `Empty definition is rejected`() {
     webTestClient.put()
-      .uri("/definitions/1")
+      .uri("/definitions")
       .headers(setAuthorisation(roles = listOf(authorisedRole)))
       .contentType(MediaType.APPLICATION_JSON)
       .bodyValue("{}")
@@ -201,7 +200,7 @@ class ReportDefinitionIntegrationTest : IntegrationTestBase() {
   @Test
   fun `Definition with invalid dataset reference is rejected`() {
     webTestClient.put()
-      .uri("/definitions/people")
+      .uri("/definitions")
       .headers(setAuthorisation(roles = listOf(authorisedRole)))
       .contentType(MediaType.APPLICATION_JSON)
       .bodyValue(
@@ -268,7 +267,7 @@ class ReportDefinitionIntegrationTest : IntegrationTestBase() {
   @Test
   fun `Definition with invalid field reference is rejected`() {
     webTestClient.put()
-      .uri("/definitions/people")
+      .uri("/definitions")
       .headers(setAuthorisation(roles = listOf(authorisedRole)))
       .contentType(MediaType.APPLICATION_JSON)
       .bodyValue(
@@ -344,7 +343,7 @@ class ReportDefinitionIntegrationTest : IntegrationTestBase() {
   @Test
   fun `Definition with date range filter is returned correctly`() {
     webTestClient.put()
-      .uri("/definitions/people")
+      .uri("/definitions")
       .headers(setAuthorisation(roles = listOf(authorisedRole)))
       .contentType(MediaType.APPLICATION_JSON)
       .bodyValue(
@@ -382,15 +381,15 @@ class ReportDefinitionIntegrationTest : IntegrationTestBase() {
               }
             ],
             "policy": [
-            {
-              "id": "accessPolicy",
-              "type": "access",
-              "rule": [
-                {
-                  "effect": "permit",
-                  "condition": []
-                }
-              ]
+              {
+                "id": "accessPolicy",
+                "type": "access",
+                "rule": [
+                  {
+                    "effect": "permit",
+                    "condition": []
+                  }
+                ]
               },
               {
                 "id": "60",
@@ -404,13 +403,13 @@ class ReportDefinitionIntegrationTest : IntegrationTestBase() {
                 "id": "everyone",
                 "name": "Everyone",
                 "description": "EVERYONE",
-                "created": "2023-12-04T14:41:00",
                 "classification": "OFFICIAL",
                 "version": "1.2.3",
                 "render": "HTML",
                 "dataset": "people",
                 "specification": {
                   "template": "list",
+                  "section": [],
                   "field": [
                     {
                       "name": "date",
@@ -450,9 +449,31 @@ class ReportDefinitionIntegrationTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `Invalid definition returns kotlinx-serialization exception properly`() {
+    val body = webTestClient.put()
+      .uri("/definitions")
+      .headers(setAuthorisation(roles = listOf(authorisedRole)))
+      .contentType(MediaType.APPLICATION_JSON)
+      .bodyValue(
+        """
+        {"id": "foo"}
+        """.trimIndent(),
+      )
+      .exchange()
+      .expectStatus()
+      .isBadRequest
+      .expectBody(String::class.java)
+      .returnResult()
+      .responseBody
+
+    assertThat(body).containsPattern("Validation failure: Fields \\[.*] are required for type")
+    println("****\n\n${body}\n\n***")
+  }
+
+  @Test
   fun `Property with GSON deserialisation annotations is deserialised correctly`() {
     webTestClient.put()
-      .uri("/definitions/1")
+      .uri("/definitions")
       .headers(setAuthorisation(roles = listOf(authorisedRole)))
       .contentType(MediaType.APPLICATION_JSON)
       .bodyValue(productDefinition)
@@ -480,7 +501,7 @@ class ReportDefinitionIntegrationTest : IntegrationTestBase() {
   @Test
   fun `Definition is deleted`() {
     webTestClient.put()
-      .uri("/definitions/1")
+      .uri("/definitions")
       .headers(setAuthorisation(roles = listOf(authorisedRole)))
       .contentType(MediaType.APPLICATION_JSON)
       .bodyValue(productDefinition)
@@ -506,7 +527,7 @@ class ReportDefinitionIntegrationTest : IntegrationTestBase() {
   @Test
   fun `Definition is fetched`() {
     webTestClient.put()
-      .uri("/definitions/1")
+      .uri("/definitions")
       .headers(setAuthorisation(roles = listOf(authorisedRole)))
       .contentType(MediaType.APPLICATION_JSON)
       .bodyValue(productDefinition)

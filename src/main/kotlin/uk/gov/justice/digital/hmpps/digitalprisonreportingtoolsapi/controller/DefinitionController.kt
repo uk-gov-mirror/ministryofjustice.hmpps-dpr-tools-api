@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
+import kotlinx.serialization.json.Json
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -26,8 +27,35 @@ class DefinitionController(
   val manageUsersClient: ManageUsersClient,
   @Value("\${dpr.lib.hasProbationDatasources}")
   val hasProbationDatasources: Boolean,
-
+  val kotlinxJson: Json,
 ) {
+  @Operation(
+    description = "Saves a definition",
+    security = [SecurityRequirement(name = "bearer-jwt")],
+  )
+  @PutMapping("/definitions")
+  suspend fun putDefinition(
+    @RequestBody
+    body: String,
+    httpRequest: HttpServletRequest,
+  ) {
+    // Do proper validation, which will throw if wrong. Handled in the exception handler
+    val definition = kotlinxJson.decodeFromString<ProductDefinition>(body)
+    return definitionService.saveAndValidate(
+      definition,
+      httpRequest.getUserContext(
+        manageUsersClient,
+        hasProbationDatasources,
+        DataProductReportableInformation(
+          id = "",
+          variantId = "",
+        ),
+      ),
+      body,
+    )
+  }
+
+  @Deprecated("Old endpoint, kept for one cycle in case of need for easy reversion")
   @Operation(
     description = "Saves a definition",
     security = [SecurityRequirement(name = "bearer-jwt")],
@@ -39,6 +67,7 @@ class DefinitionController(
     @PathVariable definitionId: String,
     httpRequest: HttpServletRequest,
   ) {
+    // Do proper validation, which will throw if wrong. Handled in the exception handler
     val definition = dprDefinitionGson.fromJson(body, ProductDefinition::class.java)
     return definitionService.saveAndValidate(
       definition,

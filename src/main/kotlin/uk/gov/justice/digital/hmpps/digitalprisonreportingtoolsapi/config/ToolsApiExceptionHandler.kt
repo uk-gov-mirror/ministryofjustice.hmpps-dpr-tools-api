@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.digitalprisonreportingtoolsapi.config
 
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
+import kotlinx.serialization.SerializationException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.HttpStatus.BAD_REQUEST
@@ -14,6 +15,10 @@ import uk.gov.justice.digital.hmpps.digitalprisonreportingtoolsapi.exception.Inv
 
 @RestControllerAdvice
 class ToolsApiExceptionHandler {
+  @ExceptionHandler(SerializationException::class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  fun handleKotlinxValidationExceptions(exception: SerializationException): ResponseEntity<ErrorResponse> = respondWithBadRequest(exception)
+
   @ExceptionHandler(MismatchedInputException::class)
   @ResponseStatus(BAD_REQUEST)
   fun handleValidationException(e: Exception): ResponseEntity<ErrorResponse> = respondWithBadRequest(e)
