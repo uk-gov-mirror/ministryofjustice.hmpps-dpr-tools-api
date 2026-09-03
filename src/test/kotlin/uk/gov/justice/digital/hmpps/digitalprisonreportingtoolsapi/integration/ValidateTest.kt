@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.digitalprisonreportingtoolsapi.integration
 
+import com.google.gson.Gson
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
@@ -10,59 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
 import org.springframework.boot.webtestclient.autoconfigure.AutoConfigureWebTestClient
 import org.springframework.test.context.ActiveProfiles
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.common.model.DataDefinitionPath
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.common.model.LoadType
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.common.model.SortDirection
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.AggregateType
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.Dashboard
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.DashboardBucket
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.DashboardChild
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.DashboardOption
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.DashboardSection
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.DashboardVisualisation
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.DashboardVisualisationColumn
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.DashboardVisualisationColumns
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.DashboardVisualisationType
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.Dataset
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.Datasource
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.DatasourceConnection
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.DynamicFilterOption
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.Feature
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.FeatureType
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.FilterDefinition
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.FilterType
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.Granularity
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.MetaData
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.MultiphaseQuery
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.Parameter
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.ParameterType
 import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.ProductDefinition
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.QuickFilter
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.ReferenceType
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.RenderMethod
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.Report
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.ReportChild
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.ReportField
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.ReportFilter
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.ReportMetadata
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.ReportMetadataHint
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.ReportSummary
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.Schema
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.SchemaField
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.Specification
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.SqlDialect
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.SummaryField
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.SummaryTemplate
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.Template
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.UnitType
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.ValueVisualisationColumn
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.Visible
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.WordWrap
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.policyengine.Condition
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.policyengine.Effect
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.policyengine.Policy
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.policyengine.PolicyType
-import uk.gov.justice.digital.hmpps.digitalprisonreportinglib.data.model.policyengine.Rule
 
 @SpringBootTest(webEnvironment = RANDOM_PORT, properties = ["spring.main.allow-bean-definition-overriding=true"])
 @ActiveProfiles("test")
@@ -71,198 +20,309 @@ class ValidateTest {
   @Autowired
   private lateinit var kotlinxJson: Json
 
-  @Test
-  fun `should serialize properly`() {
-    val dpd = ProductDefinition(
-      id = "test",
-      name = "test",
-      description = "test",
-      scheduled = false,
-      metadata = MetaData("auth1", "0", "owner1", "ppse", "prof1"),
-      path = DataDefinitionPath.ORPHANAGE,
-      datasource = listOf(Datasource("id1", "name1", "db1", "cata1", DatasourceConnection.AWS_DATA_CATALOG, SqlDialect.ORACLE11g)),
-      dataset = listOf(
-        Dataset(
-          "id1",
-          "name1",
-          "ds1",
-          listOf(
-            MultiphaseQuery(
-              0,
-              "ds1",
-              "q1",
-              listOf(
-                Parameter(
-                  0,
-                  "name1",
-                  ParameterType.DateTime,
-                  FilterType.AutoCompleteMulti,
-                  "",
-                  true,
-                  ReferenceType.WING,
-                ),
-              ),
-            ),
-          ),
-          Schema(
-            listOf(
-              SchemaField(
-                "name1",
-                ParameterType.String,
-                "disp1",
-                FilterDefinition(
-                  FilterType.Granulardaterange,
-                  true,
-                  "pat1",
-                  emptyList(),
-                  DynamicFilterOption(0, true, 10L, "ds1", "name1", "disp1"),
-                  "def1",
-                  "0",
-                  "10",
-                  true,
-                  Granularity.DAILY,
-                  QuickFilter.LAST_90_DAYS,
-                  0,
-                  0,
-                  100,
-                ),
-                "form1",
-              ),
-            ),
-          ),
-          listOf(
-            Parameter(
-              0,
-              "name1",
-              ParameterType.String,
-              FilterType.Caseloads,
-              "",
-              true,
-              ReferenceType.WING,
-            ),
-          ),
-          "sched1",
-        ),
-      ),
-      listOf(
-        Report(
-          "id1",
-          "name1",
-          "description",
-          "0",
-          "ds1",
-          RenderMethod.HTMLChild,
-          "sched1",
-          Specification(
-            Template.RowSectionChild,
-            listOf(
-              ReportField(
-                "rf1",
-                "rfd1",
-                WordWrap.None,
-                FilterDefinition(FilterType.Granulardaterange),
-                sortable = true,
-                defaultSort = true,
-                SortDirection.ASC,
-                "form1",
-                Visible.TRUE,
-              ),
-            ),
-            listOf("foo"),
-          ),
-          listOf(mapOf("foo" to "bar")),
-          "class1",
-          listOf(Feature(FeatureType.PRINT)),
-          listOf(
-            ReportSummary(
-              "sum1",
-              "ds1",
-              SummaryTemplate.SectionFooter,
-              listOf(SummaryField("sf1", header = false, mergeRows = false)),
-            ),
-          ),
-          ReportFilter("rf1", "q1", "id1", "desc1", "ds1", "0"),
-          ReportMetadata(listOf(ReportMetadataHint.INTERACTIVE)),
-          listOf(ReportChild("id1", listOf("rf1"))),
-          false,
-          LoadType.ASYNC,
-        ),
-      ),
-      listOf(
-        Policy(
-          "p1",
-          PolicyType.ROW_LEVEL,
-          listOf("a1"),
-          listOf(Rule(Effect.PERMIT, listOf(Condition(listOf("m1"), listOf("e1"))))),
-        ),
-      ),
-      dashboard = listOf(
-        Dashboard(
-          "d1",
-          "n1",
-          "dd1",
-          "ds1",
-          listOf(
-            DashboardSection(
-              "s1",
-              "ds1",
-              "descds1",
-              listOf(
-                DashboardVisualisation(
-                  "dsv1",
-                  DashboardVisualisationType.BAR_TIMESERIES,
-                  "disp1",
-                  "descds1",
-                  DashboardVisualisationColumns(
-                    key = listOf(
-                      DashboardVisualisationColumn(
-                        "i1",
-                        "d1",
-                        AggregateType.SUM,
-                        UnitType.PERCENTAGE,
-                        true,
-                        "axis",
-                        false,
-                      ),
-                    ),
-                    measure = listOf(
-                      DashboardVisualisationColumn(
-                        "1",
-                        "d",
-                        AggregateType.SUM,
-                        UnitType.PERCENTAGE,
-                        true,
-                        "axis",
-                        false,
-                      ),
-                    ),
-                    filter = listOf(ValueVisualisationColumn("1", "anequals")),
-                    false,
-                  ),
-                  DashboardOption(
-                    true,
-                    "bc",
-                    listOf(DashboardBucket(0L, 10L, "#FFFFFF")),
-                    showLatest = true,
-                    columnsAsList = true,
-                    horizontal = true,
-                    xStacked = true,
-                    yStacked = true,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          ReportFilter("rf1", "q1", "id1", "desc1", "ds1", "0"),
-          LoadType.ASYNC,
-          listOf(DashboardChild("d1")),
-        ),
-      ),
-    )
+  @Autowired
+  private lateinit var gson: Gson
 
-    val str = kotlinxJson.encodeToString(dpd)
-    println("\n\n${str}\n\n")
-    assertThat(kotlinxJson.decodeFromString<ProductDefinition>(str)).isEqualTo(dpd)
+  @Test
+  fun `should deserialize properly`() {
+    val json = """
+      {
+        "id": "id1",
+        "name": "p1",
+        "description": "d1",
+        "metadata": {
+          "author": "DPR",
+          "owner": "DPR",
+          "version": "0.1"
+        },
+        "datasource": [
+          {
+            "id": "ds1",
+            "name": "dsn1"
+          }
+        ],
+        "dataset": [
+          {
+            "id": "dsi1",
+            "name": "dsin1",
+            "datasource": "ds1",
+            "query": "select 1",
+            "schema": {
+              "field": [
+                {
+                  "name": "n1",
+                  "type": "string",
+                  "display": "n1"
+                },
+                {
+                  "name": "n2",
+                  "type": "int",
+                  "display": "n2"
+                },
+                {
+                  "name": "n3",
+                  "type": "int",
+                  "display": "n3"
+                },
+                {
+                  "name": "n4",
+                  "type": "int",
+                  "display": "n4"
+                }
+              ]
+            }
+          },
+          {
+            "id": "ds2",
+            "name": "dsn2",
+            "datasource": "ds2",
+            "query": "select 2",
+            "schema": {
+              "field": [
+                {
+                  "name": "sf1",
+                  "type": "timestamp",
+                  "display": "sf1d",
+                  "filter": {
+                    "index": 0,
+                    "interactive": "true",
+                    "type": "daterange",
+                    "default": "today(-3, months) - today()"
+                  }
+                },
+                {
+                  "name": "sf2",
+                  "type": "int",
+                  "display": "sf2",
+                  "formula": "make_url('/dpr/request-report/report/rep1/repvar2/filters?',${'$'}{sf3},TRUE)"
+                },
+                {
+                  "name": "sf3",
+                  "type": "int",
+                  "display": "sf3"
+                },
+                {
+                  "name": "sf4",
+                  "type": "int",
+                  "display": "sf4"
+                },
+                {
+                  "name": "sf5",
+                  "type": "int",
+                  "display": "sf5"
+                },
+                {
+                  "name": "sf6",
+                  "type": "int",
+                  "display": "sf6"
+                },
+                {
+                  "name": "sf7",
+                  "type": "int",
+                  "display": "sf7"
+                }
+              ]
+            }
+          },
+          {
+            "id": "ds3",
+            "name": "dsn3",
+            "datasource": "ds3",
+            "query": "select 3",
+            "schema": {
+              "field": [
+                {
+                  "name": "sf1",
+                  "type": "string",
+                  "display": "sf1"
+                }
+              ]
+            }
+          }
+        ],
+        "policy": [
+          {
+            "id": "lao",
+            "type": "lao",
+            "rule": [
+              {
+                "effect": "permit",
+                "condition": []
+              }
+            ]
+          },
+          {
+            "id": "access",
+            "type": "access",
+            "rule": [
+              {
+                "effect": "permit",
+                "condition": [
+                  {
+                    "match": ["${'$'}{role}", "SOME_ROLE"]
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "report": [
+          {
+            "id": "rep1",
+            "name": "rep1",
+            "description": "rep1",
+            "classification": "Official",
+            "version": "1.0.0",
+            "render": "HTML",
+            "dataset": "${'$'}ref:ds1",
+            "feature": [
+              {
+                "type": "print"
+              }
+            ],
+            "metadata": {
+              "hints": ["interactive"]
+            },
+            "specification": {
+              "template": "list",
+              "field": [
+                {
+                  "name": "${'$'}ref:sf1",
+                  "display": "ID",
+                  "formula": "",
+                  "visible": "true",
+                  "sortable": true,
+                  "defaultsort": true
+                },
+                {
+                  "name": "${'$'}ref:sf2",
+                  "display": "Created",
+                  "formula": "",
+                  "visible": "true",
+                  "sortable": true,
+                  "defaultsort": false,
+                  "filter": {
+                    "index": 1,
+                    "type": "daterange"
+                  }
+                },
+                {
+                  "name": "${'$'}ref:sf3",
+                  "display": "Status",
+                  "visible": "true",
+                  "sortable": false,
+                  "defaultsort": false,
+                  "filter": {
+                    "index": 1,
+                    "type": "multiselect",
+                    "interactive": "true",
+                    "staticoptions": [
+                      {
+                        "name": "DRAFT",
+                        "display": "Draft"
+                      },
+                      {
+                        "name": "AGREED",
+                        "display": "Agreed"
+                      },
+                      {
+                        "name": "DO_NOT_AGREE",
+                        "display": "Do not agree"
+                      },
+                      {
+                        "name": "COULD_NOT_ANSWER",
+                        "display": "Could not answer"
+                      },
+                      {
+                        "name": "UPDATED_COULD_NOT_AGREE",
+                        "display": "Updated Not Agree"
+                      },
+                      {
+                        "name": "UPDATED_AGREED",
+                        "display": "Updated Agreed"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "dashboard": [
+          {
+            "id": "d1",
+            "name": "d1",
+            "description": "d1",
+            "dataset": "ds2",
+            "section": [
+              {
+                "id": "s1",
+                "display": "s1",
+                "visualisation": [
+                  {
+                    "id": "pc1",
+                    "type": "list",
+                    "display": "v1",
+                    "option": {
+                      "showLatest": false
+                    },
+                    "column": {
+                      "key": [
+                        {
+                          "id": "${'$'}ref:ts",
+                          "display": "Date"
+                        }
+                      ],
+                      "measure": [
+                        {
+                          "id": "${'$'}ref:ts",
+                          "display": "Date"
+                        },
+                        {
+                          "id": "${'$'}ref:link",
+                          "display": "Count"
+                        },
+                        {
+                          "id": "${'$'}ref:draft_count",
+                          "display": "# No agreement"
+                        },
+                        {
+                          "id": "${'$'}ref:agreed_pct",
+                          "display": "Agreed %"
+                        },
+                        {
+                          "id": "${'$'}ref:not_agreed_pct",
+                          "display": "Not agreed %"
+                        },
+                        {
+                          "id": "${'$'}ref:could_not_answer_pct",
+                          "display": "Could not answer %"
+                        },
+                        {
+                          "id": "${'$'}ref:updated_agreed_count_pct",
+                          "display": "Updated Agreed %"
+                        },
+                        {
+                          "id": "${'$'}ref:updated_could_not_agree_pct",
+                          "display": "Updated count not agree %"
+                        },
+                        {
+                          "id": "${'$'}ref:total_to_date",
+                          "display": "Total to date"
+                        }
+                      ],
+                      "expectNull": false
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    """.trimIndent()
+    val pd = gson.fromJson(json, ProductDefinition::class.java)
+    kotlinxJson.decodeFromString<ProductDefinition>(json)
   }
 
   @Test
@@ -314,6 +374,7 @@ class ValidateTest {
                       "field": [
                           {
                               "name": "created_by",
+                              "type": "string",
                               "display": "Created By User",
                           }
                       ]
@@ -326,7 +387,7 @@ class ValidateTest {
       kotlinxJson.decodeFromString<ProductDefinition>(json)
     }
     assertThat(exception.message!!).contains("Trailing comma")
-    assertThat(exception.message!!).contains("dataset[0].schema.field[0].display")
+    assertThat(exception.message!!).contains("dataset[0].schema.field[0]")
   }
 
   @Test
