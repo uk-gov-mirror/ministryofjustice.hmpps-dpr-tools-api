@@ -141,6 +141,7 @@ workflows:
             branches:
               only:
                 - main
+                - DPR2-3265-upgrade-redshift
           requires:
             - helm_lint
             - helm_lint_probation
@@ -160,6 +161,7 @@ workflows:
             branches:
               only:
                 - main
+                - DPR2-3265-upgrade-redshift
           requires:
             - validate
             - build_docker
